@@ -1,8 +1,22 @@
-//#include "header.h"
+/*
+FUNNY LIST LIBRARY
+by Emika
+
+BEWARE:
+when you create a list, and then reassign it, *pleaseee* remember to free the list before doing that ;-;
+it's like.. uhh.. the elements in the list aren't really replaced.. the elements keep existing, floating in the void, unfindable....
+*/
+
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MAX_SIZE_FOR_READLIST 10000
+#define MAX_SIZE_FOR_READITEM 100
+/* I hope this is large enough for most cases :/ 
+   feel free to change it though, if you need longer outputs */
 
 typedef struct ListItem {
 	struct ListItem* successor;
@@ -15,6 +29,10 @@ typedef struct List {
 } List;
 
 
+/*
+remove duplicates
+search for value
+*/
 
 
 
@@ -23,9 +41,12 @@ List*     createListFromItem  (int data_size, void* data);
 List*     createListFromArray (int data_size, void* data, int num_of_data_points);
 ListItem* createListItem      (void* data, int data_size);\
 
+List*     subList             (List* original_list, int start, int end);
 List*     cloneList           (List* original_list);
+List*     randomiseList       (List* original_list);
 
 ListItem* getListItem         (List* list, int pos);
+void*     getListItemData     (List* list, int pos);
 void      removeListItem      (List* list, int pos);
 void      insert              (List* list, void* data, int pos);
 void      setListItem         (List* list, void* data, int pos);
@@ -35,20 +56,27 @@ void      extendByList        (List* list_one, List* list_two, int delete_second
 void      copyListItem        (List* list_one, int pos_one, List* list_two, int pos_two);
 void      swapListItems       (List* list_one, int pos_one, List* list_two, int pos_two);
 
+char*     readList            (List* list, char* datatype);
 void      printList           (List* list, char* datatype);
 int       listSize            (List* list);
 void      freeList            (List* list);
 
 int       listIsEmpty         (List* list);
+int       findListItem        (List* list, void* data);
+int       listContains        (List* list, void* data);
 
-void      printType           (void* pointer, int length, char* datatype);
+char*     readType            (void* pointer, int length, char* datatype);
 
 
 
 
 
 List* createList(int data_size) {
-	List* list = (List*) malloc (sizeof(data_size) + sizeof(NULL));
+	List* list = (List*) malloc (sizeof(List));
+	if(list == NULL) {
+		printf("Error in createList: memory allocation failed for some reason I've never had this happen but :þ");
+		exit(1);
+	}
 	list->data_size = data_size;
 	list->root = NULL;
 	return list;
@@ -61,10 +89,7 @@ List* createListFromItem(int data_size, void* data) {
 }
 
 List* createListFromArray(int data_size, void* data, int num_of_data_points) {
-	List* list = (List*) malloc (sizeof(data_size) + sizeof(NULL));
-	list->data_size = data_size;
-	list->root = NULL;
-
+	List* list = createList(data_size);
 	extendByArray(list, data, num_of_data_points);
 	return list;
 }
@@ -75,6 +100,11 @@ ListItem* createListItem(void* data, int data_size) {
 		exit(1);
 	}
 	ListItem* new_item = (ListItem*) malloc (sizeof(ListItem));
+	if(new_item == NULL) {
+		printf("Error in createListItem: memory allocation failed for some reason I've never had this happen but :þ");
+		exit(1);
+	}
+
 	new_item->successor = NULL;
 
 	new_item->data = (char*) malloc (data_size);
@@ -87,19 +117,39 @@ ListItem* createListItem(void* data, int data_size) {
 
 
 
-List* cloneList (List* original_list) {
-	List* cloned_list = (List*) malloc (sizeof(List*));
-	cloned_list->data_size = original_list->data_size;
-	if( listIsEmpty(original_list) ) return cloned_list;
 
-	ListItem* item_to_clone = original_list->root;
-	while(item_to_clone->successor != NULL) {
-		append(cloned_list, item_to_clone->data);
+List* subList (List* original_list, int start, int end) {
+	if (listIsEmpty(original_list)) return createList(original_list->data_size);
+
+	start %= listSize(original_list);
+	end   %= listSize(original_list);
+	if(start < 0) start += listSize(original_list);
+	if(end   < 0) end   += listSize(original_list);
+	if(start > end) {
+		printf("Error in subList(): start (%d) > end (%d)", start, end);
+		return NULL;
+	}
+
+	int amount_to_copy = end-start+1;
+	List* sublist = createList(original_list->data_size);
+	ListItem* item_to_clone = getListItem(original_list, start);
+
+	for(int i=0; i<amount_to_copy; i++) {
+		append(sublist, item_to_clone->data);
 		item_to_clone = item_to_clone->successor;
 	}
-	append(cloned_list, item_to_clone->data); /*the last, unlinked element*/
 
-	return cloned_list;
+	return sublist;
+}
+
+List* cloneList (List* original_list) {
+	return subList(original_list, 0, -1);
+}
+
+List* randomiseList (List* original_list) {
+	List* randomised_list = cloneList(original_list);
+	for(int i=listSize(randomised_list)-1; i>0; i--) swapListItems(randomised_list, i, randomised_list, rand()%i);
+	return randomised_list;
 }
 
 
@@ -120,12 +170,11 @@ ListItem* getListItem (List* list, int pos) {
 		pos--;
 	}
 
-	if(pos > 0) {
-		printf("Error at getListItem(). Tried to retrieve item at position %d, while the list is only %d long.\n", pos+listSize(list), listSize(list));
-		return NULL;
-	} else {
-		return current_item;
-	}
+	return current_item;
+}
+
+void* getListItemData (List* list, int pos) {
+	return getListItem(list, pos) -> data;
 }
 
 void removeListItem (List* list, int pos) {
@@ -169,14 +218,15 @@ void insert (List* list, void* data, int pos) {
 
 	ListItem* new_item = createListItem(data, list->data_size);
 
-	pos %= listSize(list);
-	if(pos < 0) pos += listSize(list);
 	if(pos == 0) {
 		new_item->successor = list->root;
 		list->root = new_item;
 		return;
 	}
-
+	if(pos == -1) {
+		append(list, data);
+		return;
+	}
 
 	ListItem* item_before_pos = getListItem(list, pos-1);
 	if(item_before_pos == NULL) {
@@ -190,8 +240,10 @@ void insert (List* list, void* data, int pos) {
 }
 
 void setListItem (List* list, void* data, int pos) {
+	pos %= listSize(list);
+	if(pos < 0) pos += listSize(list);
 	if (pos >= listSize(list)) {
-		printf("Error at setListItem(): tried to change position %d of the list, while the list is only %d long.", pos, listSize(list));
+		printf("Error at setListItem(): tried to change position %d of the list, while the list is only %d long.\n", pos, listSize(list));
 		return;
 	}
 
@@ -262,32 +314,64 @@ void swapListItems (List* list_one, int pos_one, List* list_two, int pos_two) {
 
 
 
-
-void printList (List* list, char* datatype) {
-
-	if (listIsEmpty(list)) {
-		printf("{}\n");
-		return;
-	}
+char* readList (List* list, char* datatype) {
+	char* output = (char*) malloc(MAX_SIZE_FOR_READLIST); 
 
 	int write_as_string = 0;
 	if (strcmp(datatype, "str") == 0) write_as_string = 1;
 
-	if (!write_as_string) printf("{");
+	if (listIsEmpty(list)) {
+		if(write_as_string) return "";
+		else                return "{}";
+	}
+
+	int length_so_far;
+	if (!write_as_string) {
+		strcpy(output, "{");
+		length_so_far = 1;
+	} else {
+		length_so_far = 0;
+	}
+
 
 	int list_size = listSize(list);
 	ListItem* current_item = list->root;
 
 	while (current_item->successor != NULL) {
-		printType (current_item->data, list->data_size, datatype);
-		current_item = current_item->successor;
-		if (!write_as_string) printf(", ");
-	}
-	printType (current_item->data, list->data_size, datatype);
+		if(strlen(output) > MAX_SIZE_FOR_READLIST-MAX_SIZE_FOR_READITEM-2) { /* this might not catch everything but good enough :þ */
+			printf("Error at readList: the output was too big, or almost too big. Consider increasing MAX_SIZE_FOR_READLIST :þ");
+			return NULL;
+		}
 
-	if (!write_as_string) printf("}");
-	printf("\n");
-	return;
+		char* this_item = readType (current_item->data, list->data_size, datatype);
+		strcpy(output + length_so_far, this_item);
+		length_so_far += strlen(this_item);
+		free(this_item);
+
+		current_item = current_item->successor;
+		if (!write_as_string) {
+			strcpy(output+length_so_far, ", ");
+			length_so_far += 2;
+		}
+	}
+
+	if(strlen(output) > MAX_SIZE_FOR_READLIST-MAX_SIZE_FOR_READITEM-1) { /* this might not catch everything but good enough :þ */
+		printf("Error at readList: the output was too big, or almost too big. Consider increasing MAX_SIZE_FOR_READLIST :þ");
+		return NULL;
+	}
+	char* this_item = readType (current_item->data, list->data_size, datatype);
+	strcpy(output + length_so_far, this_item);
+	length_so_far += strlen(this_item);
+	free(this_item);
+
+	if (!write_as_string) strcpy(output+length_so_far, "}");
+	length_so_far ++;
+	return output;
+}
+
+
+void printList (List* list, char* datatype) {
+	printf("%s\n", readList(list, datatype));
 }
 
 int listSize (List* list) {
@@ -316,46 +400,88 @@ int listIsEmpty (List* list) {
 	return (list->root == NULL);
 }
 
+int findListItem (List* list, void* data) {
+	/*returns the earliest position of the value we're looking for. If it doesn't exist, returns -1*/
+	if( listIsEmpty(list) ) return -1;
+
+	ListItem* current_item = list->root;
+	int location = 0;
+	while(current_item->successor != NULL) {
+		int equals = 1;
+		for(int i=0; i<list->data_size; i++) {
+			if(*(char*)data != *(char*)current_item->data) {
+				equals = 0;
+				break;
+			}
+		}
+		if(equals) return location;
+		current_item = current_item->successor;
+		location++;
+	}
+	int equals = 1;
+	for(int i=0; i<list->data_size; i++) {
+		if(*(char*)data != *(char*)current_item->data) {
+			equals = 0;
+			break;
+		}
+	}
+	if(equals) return location;
+	else       return -1;
+}
+
+int listContains (List* list, void* data) {
+	return (findListItem(list, data) != -1);
+}
 
 
-void printType (void* pointer, int length, char* datatype) {
+
+char* readType (void* pointer, int length, char* datatype) {
 	/* str, char, int, hex */
 	/*-1 ~ datatype incorrect. 0 ~ no error. 1 ~ incorrect size*/
+	char* output = (char*) malloc(MAX_SIZE_FOR_READLIST); 
 	int warning = -1;
-
+	int length_so_far = 0;
 
 	if (strcmp(datatype, "char") == 0 || strcmp(datatype, "str") == 0) {
-		for(int i=0; i<length; i+=1) {
-			printf("%c", *(char*) (pointer + i));
+		for(int i=0; i<length; i+=sizeof(char)) {
+			output[length_so_far] = *((char*) pointer + i);
+			length_so_far += sizeof(char);
 		}
 		warning = 0;
 
 	} else if (strcmp(datatype, "num_char") == 0) {
-		for(int i=0; i<length-1; i+=1) {
-			printf("%d ", *(char*) (pointer + i));
+		for(int i=0; i<length-sizeof(char); i+=sizeof(char)) {
+			char new_item[100];
+			sprintf(new_item, "%d ", *(char*) (pointer + i));
+			strcpy(output+length_so_far, new_item);
+			length_so_far += strlen(new_item);
 		}
-		printf("%d", *(char*) (pointer + length-1)); /*so the space doesn't appear after the last one :þ*/
+		char new_item[100] = "";
+		sprintf(new_item, "%d", * (char*) (pointer + length-sizeof(char)));
+		strcpy(output+length_so_far, new_item);
 		warning = 0;
 
 	} else if (strcmp(datatype, "int") == 0) {
-		for(int i=0; i<length; i+=4) {
-			printf("%d", *(int*)  pointer + i);
-		}
+		char new_item[100];
+		sprintf(new_item, "%d", *(int*) pointer);
+		strcpy(output, new_item);
 		warning = 0;
 		if(length % 4 != 0) warning = 1;
 
 	} else if (strcmp(datatype, "hex") == 0) {
-		if(length % 4 != 0) warning = 1;
-		for(int i=0; i<length; i+=4) {
-			printf("%x", *(int*)  pointer + i);
-		}
+		char new_item[100];
+		sprintf(new_item, "%x", *(int*) pointer);
+		strcpy(output, new_item);
 		warning = 0;
 		if(length % 4 != 0) warning = 1;
+
 	}
 
 	if(warning != 0) {
 		if(warning == -1) printf("Warning at printType(): datatype %s not supported.", datatype);
 		if(warning ==  1) printf("Warning at printType(): data of incorrect size; %d does not split into %ss.", length, datatype);
 	}
-	return;
+	return output;
 }
+
+
