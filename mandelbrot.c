@@ -1,3 +1,11 @@
+/*
+	five months later, I look back at this, and realise
+ 	that I've seen (though I haven't tried it) that
+  	there is actually a standardlibrary of complex
+   	numbers.... ehh, the implementation here wasn't
+    	too complicated a anyway :3
+*/
+
 #include <math.h>
 #include <stdio.h>
 
