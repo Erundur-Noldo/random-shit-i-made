@@ -37,20 +37,19 @@ int main(int argc, char **argv) {
        also, it can't go higher than 32 bits because like, int32_t I guess,
            alsooooooooo
               why.. why would you need this much...
-      pretty sure your hardware can't run it anyway x3 */
-   if(dimensions >= 26) {
+      pretty sure your hardware can't run it anyway x3 
+   okay now it can because I made sure the bits are computed
+      during printing instead of beforehand and put on the stack
+           as before . . . . .     */
+   if(dimensions > 26) {
       printf("no\n");
       return 1;
    }
 
    srand(time(NULL));
-   bool bit[1 << dimensions];
-   for(int i=0; i < (1 << dimensions); i++) {
-      bit[i] = rand() & 1;
-   }
 
    for(int i=0; i < (1 << dimensions); i++) {
-      if(bit[i]) printf("\033[32m");
+      if(rand() & 1) printf("\033[32m");
       else printf("\033[31m");
       for(int j=0; j<dimensions; j++) {
          /* the modulo and shit, in case you wanna do a *really* big one */
