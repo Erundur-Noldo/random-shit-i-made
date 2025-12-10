@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
       else printf("\033[31m");
       for(int j=0; j<dimensions; j++) {
          /* the modulo and shit, in case you wanna do a *really* big one */
-         printf("%c", ('m' + j - 'a') % ('z' - 'a') + 'a'); 
+         printf("%c", ('m' + j - 'a') % ('z' - 'a' + 1) + 'a'); 
          if((1 << j) & i) printf("'");
          else printf(" ");
       }
