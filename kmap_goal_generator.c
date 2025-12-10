@@ -25,12 +25,12 @@ was signed: 2025-12-10, 01:16:56
 
 int main(int argc, char **argv) {
    if(argc < 2) {
-      printf("provide number of dimensions\n");
+      puts("provide number of dimensions");
       return 1;
    }
    int dimensions = atoi(argv[1]);
    if(dimensions == 0) {
-      printf("not gonna do zero dimensions :v\n");
+      puts("not gonna do zero dimensions :v");
       return 1;
    }
    /* we only have 26 letters,
@@ -42,23 +42,27 @@ int main(int argc, char **argv) {
       during printing instead of beforehand and put on the stack
            as before . . . . .     */
    if(dimensions > 26) {
-      printf("no\n");
+      puts("no\n");
       return 1;
    }
 
+   /* I'm doing it in this weird ass way to show off
+        that I can also *not* just use printf I guess...
+    I know the compiler can also just do it for me but ye */
+   FILE *out = stdout;
    srand(time(NULL));
 
    for(int i=0; i < (1 << dimensions); i++) {
-      if(rand() & 1) printf("\033[32m");
-      else printf("\033[31m");
+      if(rand() & 1) fputs("\033[32m", out);
+      else fputs("\033[31m", out);
       for(int j=0; j<dimensions; j++) {
          /* the modulo and shit, in case you wanna do a *really* big one */
-         printf("%c", ('m' + j - 'a') % ('z' - 'a' + 1) + 'a'); 
-         if((1 << j) & i) printf("'");
-         else printf(" ");
+         fputc(('m' + j - 'a') % ('z' - 'a' + 1) + 'a', out); 
+         if((1 << j) & i) fputc('\'', out);
+         else fputc(' ', out);
       }
-      printf("\n");
+      fputc('\n', out);
    }
-   printf("\033[0m");
+   fputs("\033[0m", out);
    return 0;
 }
