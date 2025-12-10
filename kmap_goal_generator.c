@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
    /* we only have 26 letters,
        also, it can't go higher than 32 bits because like, int32_t I guess,
            alsooooooooo
-              why.. why would you need this much... 
+              why.. why would you need this much...
       pretty sure your hardware can't run it anyway x3 */
    if(dimensions >= 26) {
       printf("no\n");
