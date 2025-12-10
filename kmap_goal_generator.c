@@ -18,7 +18,7 @@ was signed: 2025-12-10, 01:16:56
    \  /
     \/
 */
-  
+
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
@@ -33,7 +33,12 @@ int main(int argc, char **argv) {
       printf("not gonna do zero dimensions :v\n");
       return 1;
    }
-   if(dimensions >= 32) {
+   /* we only have 26 letters,
+       also, it can't go higher than 32 bits because like, int32_t I guess,
+           alsooooooooo
+              why.. why would you need this much... 
+      pretty sure your hardware can't run it anyway x3 */
+   if(dimensions >= 26) {
       printf("no\n");
       return 1;
    }
@@ -48,7 +53,8 @@ int main(int argc, char **argv) {
       if(bit[i]) printf("\033[32m");
       else printf("\033[31m");
       for(int j=0; j<dimensions; j++) {
-         printf("%c", 'm' + j);
+         /* the modulo and shit, in case you wanna do a *really* big one */
+         printf("%c", ('m' + j - 'a') % ('z' - 'a') + 'a'); 
          if((1 << j) & i) printf("'");
          else printf(" ");
       }
