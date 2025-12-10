@@ -1,0 +1,59 @@
+/*
+   I was talking to random Discord computer science person,
+     and he showed me kmaps and then I misunderstood what they were I guess,
+      so I wanted to show him how to solve a 5-dimensional kmap and
+  to give myself a kmap to solve I wrote this program, so enjoy I guess
+
+    feel free to use it if you want for some reason????
+       also you might wanna revert the shit that's printed I guess...
+              I can't be bothered
+
+was signed: 2025-12-10, 01:16:56
+
+   ____
+  /    \
+ | _  _ |
+ |      |
+  \    /
+   \  /
+    \/
+*/
+  
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+   if(argc < 2) {
+      printf("provide number of dimensions\n");
+      return 1;
+   }
+   int dimensions = atoi(argv[1]);
+   if(dimensions == 0) {
+      printf("not gonna do zero dimensions :v\n");
+      return 1;
+   }
+   if(dimensions >= 32) {
+      printf("no\n");
+      return 1;
+   }
+
+   srand(time(NULL));
+   bool bit[1 << dimensions];
+   for(int i=0; i < (1 << dimensions); i++) {
+      bit[i] = rand() & 1;
+   }
+
+   for(int i=0; i < (1 << dimensions); i++) {
+      if(bit[i]) printf("\033[32m");
+      else printf("\033[31m");
+      for(int j=0; j<dimensions; j++) {
+         printf("%c", 'm' + j);
+         if((1 << j) & i) printf("'");
+         else printf(" ");
+      }
+      printf("\n");
+   }
+   printf("\033[0m");
+   return 0;
+}
